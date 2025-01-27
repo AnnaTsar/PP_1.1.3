@@ -6,22 +6,25 @@ import jm.task.core.jdbc.util.Util;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class UserDaoJDBCImpl implements UserDao {
 
     private static final Connection conn = Util.getConnection();
+    private static final Logger logger = Logger.getLogger(UserDaoJDBCImpl.class.getName());
 
     public UserDaoJDBCImpl() {
     }
 
     //создать таблицу пользователей
     public void createUsersTable() {
-        try (Statement statement = conn.createStatement()) {
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS users " +
-                    "(id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
-                    "name VARCHAR(50), " +
-                    "lastName VARCHAR(50), " +
-                    "age INT)");
+        try (PreparedStatement prst = conn.prepareStatement(
+                "CREATE TABLE IF NOT EXISTS users " +
+                "(id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                "name VARCHAR(50), " +
+                "lastName VARCHAR(50), " +
+                "age INT)")) {
+            prst.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -29,8 +32,8 @@ public class UserDaoJDBCImpl implements UserDao {
 
 //удалить таблицу пользователей
     public void dropUsersTable() {
-        try (Statement statement = conn.createStatement()) {
-            statement.executeUpdate("DROP TABLE IF EXISTS users");
+        try (PreparedStatement prst = conn.prepareStatement ("DROP TABLE IF EXISTS users")) {
+            prst.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -45,7 +48,7 @@ public class UserDaoJDBCImpl implements UserDao {
             preparedStatement.setByte(3, age);
             preparedStatement.executeUpdate();
 
-            System.out.println("User с именем – " + name + " добавлен в базу данных");
+            logger.info("User с именем – " + name + " добавлен в базу данных");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -58,7 +61,7 @@ public class UserDaoJDBCImpl implements UserDao {
         try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
-            System.out.println("User удален");
+            logger.info("User удален");
         } catch (SQLException e) {
             e.printStackTrace();
     }
@@ -88,12 +91,13 @@ public class UserDaoJDBCImpl implements UserDao {
     @Override
     public void cleanUsersTable() {
         String sql2 = "TRUNCATE TABLE users";
-        try (Statement statement = conn.createStatement()) {
-            statement.executeUpdate(sql2);
-            System.out.println("Таблица очищена");
+        try (PreparedStatement prst = conn.prepareStatement(sql2)) {
+            prst.executeUpdate();
+            logger.info("Таблица очищена");
         } catch (SQLException e) {
+            logger.warning("Не удалось очистить");
             e.printStackTrace();
-            System.out.println("Не удалось очистить");
+
         }
     }
 }
